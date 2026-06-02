@@ -14,3 +14,4 @@ venv/
 
 # Firmware binaries (large, download separately)
 *.bin
+src/wifi_cfg.py

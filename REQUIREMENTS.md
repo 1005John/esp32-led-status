@@ -1,10 +1,10 @@
 # ESP32 LED Status — 需求规格说明
 
-> 版本：v1.0.1 | 日期：2026-06-02 | 状态：已确认
+> 版本：v1.1.0 | 日期：2026-06-02 | 状态：已确认
 
 ## 1. 项目背景
 
-Claude Code 和 Hermes 工作时用户无法直观判断其状态——是在思考？在等授权？还是已完成？通过 ESP32 板载 LED 提供物理指示灯，无需看屏幕即可了解 AI 工具工作状态。两个工具共享同一块 ESP32。
+Claude Code 和 Hermes 工作时用户无法直观判断其状态。通过 ESP32 板载 WS2812 LED 提供物理指示灯。USB 串口为主要控制通道，WiFi HTTP 为备选远程通道。
 
 ## 2. 功能需求
 
@@ -13,30 +13,31 @@ Claude Code 和 Hermes 工作时用户无法直观判断其状态——是在思
 | FR-01 | 工作中显示蓝色常亮 | P0 | ✅ |
 | FR-02 | 等待授权时显示红色闪烁，持续到收到新命令 | P0 | ✅ |
 | FR-03 | 空闲时显示绿色常亮 | P0 | ✅ |
-| FR-04 | 通过串口命令切换状态 | P0 | ✅ |
+| FR-04 | USB 串口命令切换状态 | P0 | ✅ |
 | FR-05 | 提供 CLI 命令 `esp32-led` | P0 | ✅ |
 | FR-06 | 上电默认显示绿色 | P1 | ✅ |
-| FR-07 | 未知命令不影响当前状态 | P2 | ✅ |
-| FR-08 | Claude Code hooks 自动联动 | P0 | ✅ |
-| FR-09 | Hermes hooks 自动联动 | P0 | ✅ |
-| FR-10 | 串口端口自动检测（不同机器适配） | P1 | ✅ |
-| FR-11 | 授权后自动恢复工作状态蓝灯 | P0 | ✅ |
+| FR-07 | WiFi 连接 + HTTP API 控制 | P1 | ✅ |
+| FR-08 | CLI 自动回退：USB → HTTP | P1 | ✅ |
+| FR-09 | WiFi 失败时 USB 正常工作 | P0 | ✅ |
+| FR-10 | Claude Code hooks 自动联动 | P0 | ✅ |
+| FR-11 | Hermes hooks 自动联动 | P0 | ✅ |
+| FR-12 | 外置供电 + USB 数据双连接 | P1 | ✅ |
 
 ## 3. 非功能需求
 
 | ID | 类型 | 需求描述 | 目标值 |
 |----|------|----------|--------|
-| NFR-01 | 性能 | 命令响应延迟 | < 100ms |
-| NFR-02 | 可靠性 | CLI 工具静默失败 | 不影响调用方 |
+| NFR-01 | 性能 | 命令响应延迟 | < 100ms (USB) / < 500ms (HTTP) |
+| NFR-02 | 可靠性 | USB 始终可用（WiFi 失败不影响） | ✅ |
 | NFR-03 | 可用性 | 即插即用 | USB 连接后自动运行 main.py |
 | NFR-04 | 跨平台 | CLI 支持 macOS | ✅ |
 | NFR-05 | 可维护性 | 固件可用 mpremote 更新 | 无需重新烧录 |
-| NFR-06 | 多工具 | Claude Code + Hermes 共享无冲突 | ✅ |
+| NFR-06 | 安全性 | WiFi 密码不入 Git | wifi_cfg.py 已 gitignore |
 
-## 4. 约束与假设
+## 4. 已知限制
 
-- ESP32-S3 通过 USB 连接，端口为 `/dev/cu.usbmodem*`
-- 板载 WS2812 连接在 GPIO 48
-- MicroPython v1.28.0 Octal-SPIRAM 已烧录
-- Claude Code 和 Hermes 运行在同一台 Mac 上
-- 串口写入为微秒级，双工具并发概率极低
+| 限制 | 说明 | 解决方案 |
+|------|------|----------|
+| 路由器 AP 隔离 | 某些路由器阻止 WiFi 设备间 TCP | USB 通道不受影响 |
+| WiFi 功耗 | ESP32 发 WiFi 时 USB 可能掉线 | 外置电源适配器 |
+| USB 复位掉线 | ESP32-S3 复位后 USB 可能不枚举 | 插拔 USB 恢复 |
