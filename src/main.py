@@ -1,4 +1,4 @@
-"""Claude Code 状态指示器 — ESP32-S3 GPIO 48 WS2812"""
+"""Claude Code / Hermes 状态指示器 — ESP32-S3 GPIO 48 WS2812"""
 import sys
 import select
 import machine
@@ -22,6 +22,8 @@ blink_enabled = False
 blink_color = RED
 blink_state = False
 last_blink = time.ticks_ms()
+waiting_start = 0  # 进入 waiting 模式的时间戳
+WAITING_TIMEOUT = 5000  # 5 秒后自动恢复 busy
 
 # 串口轮询
 poller = select.poll()
@@ -30,10 +32,17 @@ poller.register(sys.stdin, select.POLLIN)
 buf = ''
 
 while True:
+    now = time.ticks_ms()
+
     # 闪烁逻辑
     if blink_enabled:
-        now = time.ticks_ms()
-        if time.ticks_diff(now, last_blink) > 400:
+        # 超时自动恢复：5 秒无新命令 → busy
+        if time.ticks_diff(now, waiting_start) > WAITING_TIMEOUT:
+            blink_enabled = False
+            np[0] = BLUE
+            np.write()
+            sys.stdout.write('TIMEOUT: auto-revert to busy\n')
+        elif time.ticks_diff(now, last_blink) > 400:
             last_blink = now
             blink_state = not blink_state
             np[0] = blink_color if blink_state else BLACK
@@ -59,6 +68,7 @@ while True:
                 elif cmd == 'STATUS:waiting':
                     blink_enabled = True
                     blink_color = RED
+                    waiting_start = now
                     sys.stdout.write('OK: waiting\n')
                 else:
                     sys.stdout.write('UNKNOWN: ' + cmd + '\n')
