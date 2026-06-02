@@ -2,9 +2,11 @@
 """ESP32 LED 状态控制 — Claude Code 联动
 用法: esp32-led idle|busy|waiting
 """
-import sys, os
+import sys, os, glob
 
-PORT = '/dev/cu.usbmodem1101'
+# 自动检测 ESP32 串口
+_ports = glob.glob('/dev/cu.usbmodem*')
+PORT = _ports[0] if _ports else '/dev/cu.usbmodem1101'
 STATUS = sys.argv[1] if len(sys.argv) > 1 else ''
 
 if STATUS not in ('idle', 'busy', 'waiting'):
