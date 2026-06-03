@@ -45,10 +45,11 @@ curl http://192.168.3.229/busy
 ### Claude Code (`~/.claude/settings.json`)
 ```json
 "hooks": {
-  "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "esp32-led busy"}]}],
-  "PostToolUse":      [{"hooks": [{"type": "command", "command": "esp32-led busy"}]}],
-  "PermissionRequest": [{"hooks": [{"type": "command", "command": "esp32-led waiting"}]}],
-  "Stop":             [{"hooks": [{"type": "command", "command": "esp32-led idle"}]}]
+  "UserPromptSubmit":    [{"hooks": [{"type": "command", "command": "esp32-led busy"}]}],
+  "ElicitationResult":   [{"hooks": [{"type": "command", "command": "esp32-led busy"}]}],
+  "PostToolUse":         [{"hooks": [{"type": "command", "command": "esp32-led busy"}]}],
+  "PermissionRequest":   [{"hooks": [{"type": "command", "command": "esp32-led waiting"}]}],
+  "Stop":                [{"hooks": [{"type": "command", "command": "esp32-led idle"}]}]
 }
 ```
 
